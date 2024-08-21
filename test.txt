@@ -1,0 +1,468 @@
+Main.jsx
+import { createRoot } from "react-dom/client";
+import App from "./App.jsx";
+import "./index.css";
+import { BrowserRouter } from "react-router-dom";
+import Context from "./utils/Context.jsx";
+
+createRoot(document.getElementById("root")).render(
+  <Context>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </Context>
+);
+
+
+App.jsx
+import { Route, Routes } from "react-router-dom";
+import Details from "./Components/Details";
+import Home from "./Components/Home";
+import Edit from "./Components/Edit";
+import AddNewItem from "./Components/AddNewItem";
+
+const App = () => {
+  return (
+    <div className="w-full  h-screen flex">
+      <Routes>
+        <Route path="/AddNewItem" element={<AddNewItem />} />
+        <Route path="/Details/:id" element={<Details />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/Edit/:id" element={<Edit />} />
+      </Routes>
+    </div>
+  );
+};
+
+export default App;
+
+Home.jsx
+import Nav from "./Nav";
+import { useContext, useEffect, useState } from "react";
+import { ProductContext } from "../utils/Context";
+import Product from "./Product";
+import Loading from "./Loading";
+import { useLocation } from "react-router-dom";
+
+const Home = () => {
+  const [products] = useContext(ProductContext);
+  let { search } = useLocation();
+
+  search = search.split("=")[1];
+  const category = decodeURIComponent(search);
+
+  const [filteredProducts, setFilteredProducts] = useState([]);
+
+  useEffect(() => {
+    products
+      ? setFilteredProducts(
+          products.filter((elem) => {
+            return elem.category === category;
+          })
+        )
+      : "";
+  }, [products, category]);
+
+  return products ? (
+    <>
+      <Nav />
+      <div className="w-full min-h-screen  flex gap-4 flex-wrap  overflow-y-auto p-10">
+        {filteredProducts.length !== 0
+          ? filteredProducts.map((elem) => {
+              return <Product key={elem.id} elem={elem} />;
+            })
+          : products.map((elem) => {
+              return <Product key={elem.id} elem={elem} />;
+            })}
+      </div>
+    </>
+  ) : (
+    <Loading />
+  );
+};
+
+export default Home;
+
+Nav.txt
+
+import { useContext } from "react";
+import { Link } from "react-router-dom";
+import { ProductContext } from "../utils/Context";
+import Loading from "./Loading";
+
+const Nav = () => {
+  const [products] = useContext(ProductContext);
+  let categories = new Set();
+
+  products.forEach((element) => {
+    categories.add(element.category);
+  });
+
+  categories = Array.from(categories); 
+
+  return categories ? (
+    <nav className="h-full border-r-black border flex flex-col gap-12">
+      <div className="w-fit  px-4 py-2 flex flex-col gap-10">
+        <div className="flex flex-col justify-between">
+          <Link
+            className=" text-black p-3 rounded-full flex gap-5 w-fit "
+            to="/"
+          >
+            <span>Home</span>
+
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="size-6"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
+              />
+            </svg>
+          </Link>
+          <Link
+            className=" px-3 py-1  border-green-400 border text-green-500 "
+            to="/AddNewItem"
+          >
+            Add New Item
+          </Link>
+        </div>
+        <h1>Category</h1>
+        <ul className="flex flex-col list-disc pl-3 text-xl">
+        
+
+          {categories.map((e) => (
+            <li key={e} className=" mb-1 px-3 py-2 ">
+              <Link to={`/?category=${e}`}>{e}</Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </nav>
+  ) : (
+    <Loading />
+  );
+};
+
+export default Nav;
+
+
+AddNewItem.jsx
+
+import { useContext, useState } from "react";
+import Input from "./Input";
+import { ProductContext } from "../utils/Context";
+import { nanoid } from "nanoid";
+import { useNavigate } from "react-router-dom";
+
+const AddNewItem = () => {
+  const navigate = useNavigate();
+  const [products, setProducts] = useContext(ProductContext);
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState("");
+  const [category, setCategory] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const newProduct = {
+      id: nanoid(),
+      title,
+      price: parseFloat(price),
+      description,
+      image,
+      category,
+    };
+    setProducts((prevProducts) => [...prevProducts, newProduct]);
+
+    navigate(-1);
+  };
+
+  return (
+    <div className="h-screen w-full flex justify-center items-center">
+      <form
+        onSubmit={handleSubmit}
+        className="h-2/3 w-3/4 bg-blue-100 border shadow-2xl flex flex-col rounded-2xl py-10 gap-4 px-32"
+      >
+        <Input
+          elem="title"
+          value={title}
+          handleEdit={(e) => setTitle(e.target.value)}
+        />
+        <Input
+          elem="price"
+          value={price}
+          handleEdit={(e) => setPrice(e.target.value)}
+        />
+        <Input
+          elem="category"
+          value={category}
+          handleEdit={(e) => setCategory(e.target.value)}
+        />
+        <Input
+          elem="description"
+          value={description}
+          handleEdit={(e) => setDescription(e.target.value)}
+        />
+        <Input
+          elem="url"
+          value={image}
+          handleEdit={(e) => setImage(e.target.value)}
+        />
+
+        <div className="w-full flex items-end h-full gap-12">
+          <input
+            type="submit"
+            className="border-green-800 px-4 py-2 h-fit text-green-800 border-2 font-bold"
+            value="Add Product"
+          />
+          <input
+            type="button"
+            className="border-green-800 px-4 py-2 h-fit text-green-800 border-2 font-bold"
+            value="Preview"
+            onClick={() => {
+              // Implement preview functionality if needed
+            }}
+          />
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default AddNewItem;
+
+Details.jsx
+
+import { useContext, useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import Loading from "./Loading";
+import { ProductContext } from "../utils/Context";
+
+const Details = () => {
+  const [products, setProducts] = useContext(ProductContext);
+  const [product, setProduct] = useState(null);
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (products.length > 0) {
+      const foundProduct = products.find((prod) => prod.id == id);
+      setProduct(foundProduct);
+    }
+  }, [products, id]);
+
+  const handleDelete = () => {
+    setProducts((prev) => prev.filter((elem) => elem.id != id));
+    navigate(-1);
+  };
+  return product ? (
+    <div className="w-full  flex gap-32 justify-center items-center">
+      <img className="w-1/5 object-cover " src={product.image} alt="" />
+
+      <div className="flex flex-col gap-2 w-3/12 items-start ">
+        <span className="font-bold text-3xl">Title:{product.title}</span>
+        <Link
+          to={`/?category=${product.category}`}
+          className="text-xl w-fit text-gray-400"
+        >
+          {product.category.toUpperCase()}
+        </Link>
+        <span className="text-xl ">Price: ${product.price}</span>
+        <p>{product.description}</p>
+
+        <div className="w-1/2 text-white flex gap-10 mt-10">
+          <Link
+            to={`/Edit/${product.id}`}
+            className=" text-center w-1/2 p-2 border border-blue-400 text-blue-400"
+          >
+            Edit
+          </Link>
+          <button
+            onClick={handleDelete}
+            className=" w-1/2 py-2 border border-red-400 text-red-400"
+          >
+            Delete
+          </button>
+        </div>
+        <button
+          onClick={() => navigate(-1)}
+          className="w-1/4 py-2 text-center border mt-4 border-purple-400 text-purple-400"
+        >
+          Go Back
+        </button>
+      </div>
+    </div>
+  ) : (
+    <Loading />
+  );
+};
+
+export default Details;
+
+
+Edit.jsx
+import { useContext, useEffect, useState } from "react";
+import Input from "./Input";
+import { ProductContext } from "../utils/Context";
+import { useNavigate, useParams } from "react-router-dom";
+
+const Edit = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const [products, setProducts] = useContext(ProductContext);
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState("");
+  const [category, setCategory] = useState("");
+
+  useEffect(() => {
+    const product = products.find((prod) => prod.id.toString() === id);
+
+    if (product) {
+      console.log("Found product:", product);
+      setTitle(product.title);
+      setPrice(product.price);
+      setDescription(product.description);
+      setImage(product.image);
+      setCategory(product.category);
+    } else {
+      console.log("Product not found");
+    }
+  }, [id, products]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const updatedProduct = {
+      id,
+      title,
+      price: parseFloat(price),
+      description,
+      image,
+      category,
+    };
+
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product.id.toString() === id ? updatedProduct : product
+      )
+    );
+
+    navigate(-1);
+  };
+
+  return (
+    <div className="h-screen w-full flex justify-center items-center">
+      <form
+        onSubmit={handleSubmit}
+        className="h-2/3 w-3/4 bg-blue-100 border shadow-2xl flex flex-col rounded-2xl py-10 gap-4 px-32"
+      >
+        <Input
+          elem="title"
+          value={title}
+          handleEdit={(e) => setTitle(e.target.value)}
+        />
+        <Input
+          elem="price"
+          value={price}
+          handleEdit={(e) => setPrice(e.target.value)}
+        />
+        <Input
+          elem="category"
+          value={category}
+          handleEdit={(e) => setCategory(e.target.value)}
+        />
+        <Input
+          elem="description"
+          value={description}
+          handleEdit={(e) => setDescription(e.target.value)}
+        />
+        <Input
+          elem="url"
+          value={image}
+          handleEdit={(e) => setImage(e.target.value)}
+        />
+
+        <div className="w-full flex items-end h-full gap-12">
+          <input
+            type="submit"
+            className="border-green-800 px-4 py-2 h-fit text-green-800 border-2 font-bold"
+            value="Update Product"
+          />
+          <input
+            type="button"
+            className="border-green-800 px-4 py-2 h-fit text-green-800 border-2 font-bold"
+            value="Preview"
+            onClick={() => {}}
+          />
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default Edit;
+
+Input.jsx
+
+const Input = ({ elem, value, handleEdit }) => {
+  return (
+    <div className="flex w-full gap-12">
+      <label className="font-bold text-2xl w-1/4 py-2" htmlFor={elem}>
+        {elem.toUpperCase()}:
+      </label>
+      {elem === "description" ? (
+        <textarea
+          rows={7}
+          value={value}
+          onChange={handleEdit}
+          className="px-4 resize-none w-2/3 py-3 placeholder:text-black outline-none"
+          type="text"
+          name={elem}
+          id={elem}
+          placeholder={`Enter ${elem}`}
+          required
+        />
+      ) : (
+        <input
+          value={value}
+          onChange={handleEdit}
+          className="px-4 w-2/3 py-3 placeholder:text-black outline-none"
+          type={elem === "url" ? "url" : "text"}
+          name={elem}
+          id={elem}
+          placeholder={`Enter ${elem}`}
+          required
+        />
+      )}
+    </div>
+  );
+};
+
+export default Input;
+
+Loading.jsx
+
+const Loading = () => {
+  return (
+    <div className=" flex items-center justify-center w-full">
+      <h1 className="text-5xl font-bold">Loading...</h1>
+    </div>
+  );
+};
+
+export default Loading;
+
+
+
+
+

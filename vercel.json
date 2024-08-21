@@ -1,8 +1,12 @@
 {
+  "buildCommand": "vite build",
+  "cleanUrls": true,
   "rewrites": [
     {
-      "sources": "/(.*)",
-      "destination": "/"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ]
+  ],
+  "devCommand": "vite",
+  "framework": "null"
 }

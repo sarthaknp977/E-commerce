@@ -9,7 +9,7 @@ const Cart = () => {
     useContext(ProductContext);
 
   return (
-    <div className="w-full  flex justify-center">
+    <div className="w-full flex justify-center">
       <div className=" w-2/3  flex flex-col gap-10 justify-center py-40">
         <h1 className="  text-6xl font-bold">Cart</h1>
         <CartHeading />

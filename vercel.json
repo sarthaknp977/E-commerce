@@ -8,5 +8,5 @@
     }
   ],
   "devCommand": "vite",
-  "framework": "null"
+  "framework": "vite"
 }
